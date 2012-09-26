@@ -102,6 +102,7 @@ class Cache {
         // whether if it was previously cloned in a different build or if it's
         // going to be cloned right now.
         masterLock.lockInterruptibly();
+        listener.getLogger().println("Acquired master cache lock.");
         try {
             if (masterCache.isDirectory()) {
                 if (MercurialSCM.joinWithPossibleTimeout(masterHg.pull(config.getBranch()).pwd(masterCache), true, listener) != 0) {
@@ -110,7 +111,7 @@ class Cache {
                 }
             } else {
                 masterCaches.mkdirs();
-                if (MercurialSCM.joinWithPossibleTimeout(masterHg.clone("--noupdate", remote, masterCache.getRemote()), fromPolling, listener) != 0) {
+                if (MercurialSCM.joinWithPossibleTimeout(masterHg.clone("--noupdate", remote, masterCache.getRemote()), true, listener) != 0) {
                     listener.error("Failed to clone " + remote + " in master");
                     return null;
                 }
@@ -131,21 +132,23 @@ class Cache {
         ReentrantLock slaveLock = getLockForSlaveNode(node.getNodeName());
         slaveLock.lockInterruptibly();
         try {
+            listener.getLogger().println("Acquired slave node cache lock for node " + node.getNodeName() + ".");
             // Need to clone entire repo.
             if(localCache.isDirectory()) {
-                if (MercurialSCM.joinWithPossibleTimeout(slaveHg.pull(config.getBranch()), fromPolling, listener) != 0) {
+                if (MercurialSCM.joinWithPossibleTimeout(slaveHg.pull(config.getBranch()).pwd(localCache), true, listener) != 0) {
                     listener.error("Failed to update " + localCache);
                     return null;
                 }
             } else {
                 localCaches.mkdirs();
-                if (MercurialSCM.joinWithPossibleTimeout(slaveHg.clone("--noupdate", remote, localCache.getRemote()), fromPolling, listener) != 0) {
+                if (MercurialSCM.joinWithPossibleTimeout(slaveHg.clone("--noupdate", remote, localCache.getRemote()), true, listener) != 0) {
                     listener.error("Failed to lcone " +  remote + " in " + node.getNodeName());
                     return null;
                 }
             }
         } finally {
             slaveLock.unlock();
+            listener.getLogger().println("Slave node cache lock released for node " + node.getNodeName() + ".");
         }
 
         return localCache;
