@@ -96,8 +96,9 @@ public class HgExe {
         return (allowDebug ? base : baseNoDebug).clone();
     }
 
-    public ProcStarter pull() {
-        return run("pull");
+    public ProcStarter pull(String revision) {
+        String[] args = {"pull", "-r", revision };
+        return run(args);
     }
 
     public ProcStarter clone(String... args) {
