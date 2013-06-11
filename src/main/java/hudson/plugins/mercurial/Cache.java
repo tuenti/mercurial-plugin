@@ -105,7 +105,7 @@ class Cache {
         listener.getLogger().println("Acquired master cache lock.");
         try {
             if (masterCache.isDirectory()) {
-                if (MercurialSCM.joinWithPossibleTimeout(masterHg.pull().pwd(masterCache), true, listener) != 0) {
+                if (MercurialSCM.joinWithPossibleTimeout(masterHg.pull(config.getBranch()).pwd(masterCache), true, listener) != 0) {
                     listener.error("Failed to update " + masterCache);
                     return null;
                 }
@@ -135,7 +135,7 @@ class Cache {
             listener.getLogger().println("Acquired slave node cache lock for node " + node.getNodeName() + ".");
             // Need to clone entire repo.
             if(localCache.isDirectory()) {
-                if (MercurialSCM.joinWithPossibleTimeout(slaveHg.pull().pwd(localCache), true, listener) != 0) {
+                if (MercurialSCM.joinWithPossibleTimeout(slaveHg.pull(config.getBranch()).pwd(localCache), true, listener) != 0) {
                     listener.error("Failed to update " + localCache);
                     return null;
                 }
