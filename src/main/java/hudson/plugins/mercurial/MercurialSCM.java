@@ -504,25 +504,24 @@ public class MercurialSCM extends SCM implements Serializable {
             throw new AbortException("Failed to pull");
         } 
 
-        if(clean) {
-            if (hg.cleanAll().pwd(repository).join() != 0) {
-                listener.error("Failed to clean unversioned files");
-                throw new AbortException("Failed to clean unversioned files");
-            }
-        }
-
-        int updateExitCode;
         try {
-            updateExitCode = hg.run("update", "--clean", "--rev", getBranch(env)).pwd(repository).join();
+            int updateExitCode = hg.run("update", "--clean", "--rev", getBranch(env)).pwd(repository).join();
+			if (updateExitCode != 0) {
+				listener.error("Failed to update");
+				throw new AbortException("Failed to update");
+			}
         } catch (IOException e) {
             listener.error("Failed to update");
             e.printStackTrace(listener.getLogger());
             throw new AbortException("Failed to update");
-        }
-        if (updateExitCode != 0) {
-            listener.error("Failed to update");
-            throw new AbortException("Failed to update");
-        }
+        } finally {
+			 if(clean) {
+			 	if (hg.cleanAll().pwd(repository).join() != 0) {
+			 		listener.error("Failed to clean unversioned files");
+			 		throw new AbortException("Failed to clean unversioned files");
+			 	}
+			 }
+		}
         if (build.getNumber() % 100 == 0) {
             PossiblyCachedRepo cachedSource = cachedSource(node, launcher, listener, true);
             if (cachedSource != null) {
